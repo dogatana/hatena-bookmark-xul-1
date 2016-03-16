@@ -49,7 +49,22 @@ extend(BookmarkTreeView.prototype, {
 
     showByTags: function (tags) {
         this._update = function BTV_doUpdateByTags(callback) {
-            let bookmarks = Bookmark.findByTags(tags);
+            var bids;
+            for (var i = 0; i < tags.length; i++) {
+                var cond = { where: "name = :name", name: tags[i] };
+                if (bids) {
+                    cond.where +=
+                    " AND bookmark_id IN (" + bids.join(",") + ")";
+                }
+                bids = Model.Tag.find(cond).map(function (tag) tag.bookmark_id);
+                if (!bids.length)
+                	return;
+            }
+            let query = {
+                where: 'id IN (' + bids.join(',') + ')',
+                order: 'date asc'
+            };
+            let bookmarks = Model.Bookmark.find(query);
             if (this.isAscending) bookmarks.reverse();
             this.setBookmarksAsync(bookmarks, callback);
         };
